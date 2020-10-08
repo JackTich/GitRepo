@@ -1,6 +1,7 @@
 package com.jacktich.gitrepo.app
 
 import android.app.Application
+import com.jacktich.gitrepo.di.components.AppComponents
 import com.jacktich.gitrepo.di.components.DaggerAppComponents
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector

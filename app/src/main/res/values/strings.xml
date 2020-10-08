@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">GitRepo</string>
+    <string name="error_connection">Ошибка соединения с сервером</string>
+    <string name="go_to_all_repository">Перейти к просмотру всех репозиториев</string>
+    <string name="or">ИЛИ</string>
+    <string name="auth_and_go_to_your_rep">Авторизоваться и перейти к своим репозиториям</string>
+    <string name="repos_search">Поиск по репозиториям</string>
 </resources>

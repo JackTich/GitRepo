@@ -3,6 +3,10 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-kapt'
 
+def apiFile = rootProject.file("api.properties")
+def apiProperty = new Properties()
+apiProperty.load(new FileInputStream(apiFile))
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
@@ -13,8 +17,13 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        //Вынесенные параметры конфигурации API(необходимо скрывать)
+        buildConfigField("String", "BASE_URL", apiProperty['BASE_URL'])
+        buildConfigField("String", "CLIENT_ID", apiProperty['CLIENT_ID'])
+        buildConfigField("String", "CLIENT_SECRET", apiProperty['CLIENT_SECRET'])
+        buildConfigField("String", "REDIRECT_URI", apiProperty['REDIRECT_URI'])
     }
 
     buildTypes {
@@ -27,6 +36,10 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
     }
 }
 
@@ -55,6 +68,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-livedata-ktx:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-reactivestreams:$lifecycleVersion"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:$lifecycleVersion"
     kapt "androidx.lifecycle:lifecycle-compiler:$lifecycleVersion"
 
     //Network
@@ -68,8 +82,16 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:$daggerVersion"
     implementation "com.google.dagger:dagger-android:$daggerVersion"
     kapt "com.google.dagger:dagger-android-processor:$daggerVersion"
+    compileOnly "com.squareup.inject:assisted-inject-annotations:$assistedInjectVersion"
+    annotationProcessor "com.squareup.inject:assisted-inject-processor:$assistedInjectVersion"
 
     //RxJava3
     implementation "io.reactivex.rxjava3:rxjava:$rxjava3Version"
     implementation "io.reactivex.rxjava3:rxandroid:$rxjavaAndroidVersion"
+
+    //Picasso
+    implementation "com.squareup.picasso:picasso:$picassoVersion"
+
+    //Shimmer preloading
+    implementation "com.facebook.shimmer:shimmer:$facebookShimmerVersion"
 }

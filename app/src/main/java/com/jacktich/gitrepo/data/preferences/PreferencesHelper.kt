@@ -2,8 +2,7 @@ package com.jacktich.gitrepo.data.preferences
 
 interface PreferencesHelper {
 
-    companion object{
+    fun setAccessToken(token: String)
 
-    }
-
+    fun getAccessToken(): String?
 }
