@@ -1,33 +1,28 @@
 package com.jacktich.gitrepo.ui.auth
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.LiveDataReactiveStreams
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.map
-import com.google.gson.Gson
+import androidx.lifecycle.*
 import com.jacktich.gitrepo.data.api.apihelpers.Resource
-import com.jacktich.gitrepo.data.api.responces.ErrorAuthResponse
-import com.jacktich.gitrepo.data.api.responces.ErrorRepositoriesResponse
-import com.jacktich.gitrepo.data.api.responces.TokenResponse
 import com.jacktich.gitrepo.data.repository.AuthRepository
-import javax.inject.Inject
+import com.jacktich.gitrepo.di.base.AssistedSavedStateViewModelFactory
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
 
-class AuthViewModel @Inject constructor(
-    private val authRepository: AuthRepository
+class AuthViewModel @AssistedInject constructor(
+    private val authRepository: AuthRepository,
+    @Assisted private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    fun getAccessToken(code: String): LiveData<Any> {
+    @AssistedInject.Factory
+    interface Factory: AssistedSavedStateViewModelFactory<AuthViewModel> {
+        override fun create(savedStateHandle: SavedStateHandle): AuthViewModel
+    }
 
-        return LiveDataReactiveStreams.fromPublisher(authRepository.postAuthRequest(code)).map {
-            if (Gson().fromJson(it, TokenResponse::class.java).accessToken != null) {
-                Gson().fromJson(it, TokenResponse::class.java)
-            } else {
-                Gson().fromJson(it, ErrorAuthResponse::class.java)
-            }
-        }
-
+    fun getAccessToken(code: String): LiveData<Resource<Any>> {
+       return authRepository.postAuthRequest(code)
     }
 
     fun putTokenInPref(token: String) = authRepository.putTokenInPref(token)
+
+    fun isTokenExist(): Boolean = authRepository.isTokenExist()
 
 }

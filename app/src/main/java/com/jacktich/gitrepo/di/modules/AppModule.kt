@@ -2,21 +2,15 @@ package com.jacktich.gitrepo.di.modules
 
 import android.app.Application
 import android.content.Context
-import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
 import com.jacktich.gitrepo.BuildConfig
-import com.jacktich.gitrepo.app.GitRepoApp
 import com.jacktich.gitrepo.data.api.IGitApi
-import com.jacktich.gitrepo.data.api.responces.RepositoriesItem
 import com.jacktich.gitrepo.data.preferences.AppPreferencesHelper
 import com.jacktich.gitrepo.data.preferences.PreferencesHelper
-import com.jacktich.gitrepo.utils.ApiConst
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.CallAdapter
 import retrofit2.Retrofit
 import retrofit2.adapter.rxjava3.RxJava3CallAdapterFactory
 import retrofit2.converter.gson.GsonConverterFactory

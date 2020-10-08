@@ -3,7 +3,7 @@ package com.jacktich.gitrepo.data.api.responces
 import com.google.gson.annotations.SerializedName
 
 data class RepositoriesItem (
-    val isShimmer: Boolean?,
+    val isShimmer: Boolean? = null,
     @SerializedName("id")
     val id: Long,
     @SerializedName("full_name")

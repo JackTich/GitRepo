@@ -1,23 +1,19 @@
 package com.jacktich.gitrepo.ui.repositories
 
+import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
-import android.util.Log
 import android.view.Menu
-import android.widget.SearchView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.MenuItemCompat
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.jacktich.gitrepo.R
-import com.jacktich.gitrepo.data.api.apihelpers.Status
 import com.jacktich.gitrepo.data.api.responces.DataOwner
-import com.jacktich.gitrepo.data.api.responces.ErrorRepositoriesResponse
 import com.jacktich.gitrepo.data.api.responces.RepositoriesItem
+import com.jacktich.gitrepo.di.base.CustomSavedStateViewModelFactory
+import com.jacktich.gitrepo.ui.auth.AuthActivity
 import com.jacktich.gitrepo.ui.repositories.adapter.AdapterRepositories
+import com.jacktich.gitrepo.utils.ApiConst
 import dagger.android.AndroidInjection
 import kotlinx.android.synthetic.main.activity_repositories.*
 import javax.inject.Inject
@@ -25,59 +21,117 @@ import javax.inject.Inject
 class RepositoriesActivity : AppCompatActivity() {
 
     @Inject
-    lateinit var viewModelFactory: ViewModelProvider.Factory
+    lateinit var customSavedStateFactory: CustomSavedStateViewModelFactory
 
     private lateinit var repositoriesViewModel: RepositoriesViewModel
 
     private var adapterRepositories = AdapterRepositories()
-    private lateinit var userRepositories: List<RepositoriesItem>
 
-    private val allReposTextListener = object : SearchView.OnQueryTextListener {
+    private val recyclerViewOnScrollListener =
+        object : RecyclerView.OnScrollListener() {
 
-        override fun onQueryTextSubmit(p0: String?): Boolean {
-            return false
-        }
-
-        override fun onQueryTextChange(p0: String?): Boolean {
-            if (p0 != null) {
-                repositoriesViewModel.getSearchRepositories(p0)
-            } else {
-                adapterRepositories.submitList(null)
-                repositoriesViewModel.getPublicRepositories()
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
+                val currentReposCount = repositoriesViewModel.currentRepositoryCount.value
+                val lastVisibleItemPosition =
+                    (rvRepositories.layoutManager as LinearLayoutManager).findLastVisibleItemPosition()
+                if (currentReposCount != null && lastVisibleItemPosition >= currentReposCount - 3) {
+                    repositoriesViewModel.currentRepositoryCount.value =
+                        currentReposCount + ApiConst.PAGE_COUNT
+                    repositoriesViewModel.getPublicRepositories(adapterRepositories.getLatestItemId())
+                    adapterRepositories.submitList(adapterRepositories.currentList + getRepositoriesShimmerList())
+                }
             }
-            return false
         }
 
-    }
+    private val allReposTextListener =
+        object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
 
-    private val userReposTextListener = object : SearchView.OnQueryTextListener {
-
-        override fun onQueryTextSubmit(p0: String?): Boolean {
-            return false
-        }
-
-        override fun onQueryTextChange(p0: String?): Boolean {
-            if (p0 != null) {
-                val filteredList = userRepositories.filter { it.fullName.contains(p0, true) }
-                adapterRepositories.submitList(filteredList)
-            } else {
-                adapterRepositories.submitList(userRepositories)
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                return false
             }
-            return false
+
+            override fun onQueryTextChange(p0: String?): Boolean {
+                if (p0 != "") {
+                    rvRepositories.clearOnScrollListeners()
+                    repositoriesViewModel.etFieldText.value = p0
+                    adapterRepositories.submitList(getRepositoriesShimmerList())
+                    repositoriesViewModel.getSearchRepositories(p0!!)
+                } else {
+                    repositoriesViewModel.currentRepositoryCount.value =
+                        ApiConst.PAGE_COUNT.toLong()
+                    repositoriesViewModel.etFieldText.value = null
+                    repositoriesViewModel.liveRepositoriesItem.value = listOf()
+                    rvRepositories.addOnScrollListener(recyclerViewOnScrollListener)
+                    repositoriesViewModel.getPublicRepositories()
+                }
+                return false
+            }
+
         }
 
-    }
+    private val userReposTextListener =
+        object : androidx.appcompat.widget.SearchView.OnQueryTextListener {
+
+            override fun onQueryTextSubmit(p0: String?): Boolean {
+                return false
+            }
+
+            override fun onQueryTextChange(p0: String?): Boolean {
+                repositoriesViewModel.allUserRepositories.value?.let {
+                    val allItemList = repositoriesViewModel.allUserRepositories.value
+                    if (p0 != "") {
+                        repositoriesViewModel.etFieldText.value = p0
+                        repositoriesViewModel.liveRepositoriesItem.value =
+                            allItemList?.filter { it.fullName.contains(p0!!, true) }
+
+                    } else {
+                        repositoriesViewModel.etFieldText.value = null
+                        repositoriesViewModel.liveRepositoriesItem.value =
+                            allItemList
+                    }
+                }
+                return false
+            }
+
+        }
 
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_repos_toolbar, menu)
         val searchItem = menu!!.findItem(R.id.searchViewItem)
-        val searchView = searchItem.actionView as SearchView
-        if (repositoriesViewModel.isAuthorizing()) {
+        val overflowMenuItem = menu.findItem(R.id.overflowItem)
+        val searchView = searchItem.actionView as androidx.appcompat.widget.SearchView
+        val isAuthorizing = repositoriesViewModel.isAuthorizing()
+
+        //Create overflow menu
+        overflowMenuItem.title = if (isAuthorizing) {
+            getString(R.string.sign_out)
+        } else {
+            getString(R.string.sign_in)
+        }
+        overflowMenuItem.setOnMenuItemClickListener {
+            if (isAuthorizing) {
+                repositoriesViewModel.clearToken()
+                openAuthActivity()
+            } else {
+                openAuthActivity(isRequiredLogin = true)
+            }
+            return@setOnMenuItemClickListener true
+        }
+
+        //Create SearchView
+        repositoriesViewModel.etFieldText.value?.let {
+            searchView.setQuery(it, true)
+            searchItem.isActionViewExpanded
+            searchView.requestFocus()
+        }
+        if (isAuthorizing) {
             searchView.setOnQueryTextListener(userReposTextListener)
         } else {
             searchView.setOnQueryTextListener(allReposTextListener)
         }
+
         return super.onCreateOptionsMenu(menu)
     }
 
@@ -85,54 +139,34 @@ class RepositoriesActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_repositories)
         AndroidInjection.inject(this)
-        Toast.makeText(this, "this", Toast.LENGTH_SHORT).show()
         firstInit()
         observeRepositories()
     }
 
     private fun firstInit() {
+        val localFactory = customSavedStateFactory.create(this)
         repositoriesViewModel =
-            ViewModelProvider(this, viewModelFactory).get(RepositoriesViewModel::class.java)
-        repositoriesViewModel.getPublicRepositories().value?.data?.let {
-            Log.i("item", it[0].fullName)
-        }
+            ViewModelProvider(this, localFactory).get(RepositoriesViewModel::class.java)
         rvRepositories.apply {
             adapter = adapterRepositories
             layoutManager = LinearLayoutManager(this@RepositoriesActivity)
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
-        super.onSaveInstanceState(outState, outPersistentState)
-
+        if (!repositoriesViewModel.isAuthorizing()) {
+            rvRepositories.addOnScrollListener(recyclerViewOnScrollListener)
+        }
+        if (repositoriesViewModel.liveRepositoriesItem.value == null) {
+            adapterRepositories.submitList(getRepositoriesShimmerList())
+        }
     }
 
     private fun observeRepositories() {
-        if (repositoriesViewModel.isAuthorizing()) {
-            repositoriesViewModel.getUserRepositories().observe(this, {
-                userRepositories = it
-                adapterRepositories.apply {
-                    submitList(currentList)
-                }
-            })
-        } else {
-            repositoriesViewModel.getPublicRepositories().observe(this, {
-                when (it.status) {
-                    Status.SUCCESS -> {
-                        adapterRepositories.apply {
-                            submitList(currentList + it.data as List<RepositoriesItem>)
-                        }
-                    }
-                    Status.ERROR -> {
-                        if (it.message != null) Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show()
-                    }
-                    Status.LOADING -> {
-                        Toast.makeText(this, "yyy", Toast.LENGTH_SHORT).show()
-                    }
-                }
+
+        repositoriesViewModel.liveRepositoriesItem.observe(this, {
+            adapterRepositories.apply {
+                submitList(it)
             }
-            )
-        }
+        })
+
     }
 
     private fun getRepositoriesShimmerList(): List<RepositoriesItem> {
@@ -149,6 +183,15 @@ class RepositoriesActivity : AppCompatActivity() {
             )
         }
         return listShimmer
+    }
+
+    private fun openAuthActivity(isRequiredLogin: Boolean? = null) {
+        val intent = Intent(this, AuthActivity::class.java)
+        isRequiredLogin?.let {
+            intent.putExtra(AuthActivity.KEY_REQUIRED_LOGIN, it)
+        }
+        startActivity(intent)
+        finish()
     }
 
 }

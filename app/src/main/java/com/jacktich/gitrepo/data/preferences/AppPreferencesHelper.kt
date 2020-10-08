@@ -18,5 +18,7 @@ class AppPreferencesHelper @Inject constructor(private val context: Context): Pr
 
     override fun getAccessToken(): String? = prefCore.getString(PREF_KEY_ACCESS_TOKEN, null)
 
+    override fun clearAccessToken() = prefCore.edit().remove(PREF_KEY_ACCESS_TOKEN).apply()
+
 
 }

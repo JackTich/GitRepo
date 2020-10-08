@@ -5,4 +5,7 @@
     <string name="or">ИЛИ</string>
     <string name="auth_and_go_to_your_rep">Авторизоваться и перейти к своим репозиториям</string>
     <string name="repos_search">Поиск по репозиториям</string>
+    <string name="sign_in">Войти</string>
+    <string name="sign_out">Выйти</string>
+    <string name="author_jacktich">Автор: JackTich</string>
 </resources>

@@ -5,6 +5,7 @@ object ApiConst {
     //All repositories
     const val URL_ALL_REPO = "/repositories"
     const val PARAM_SINCE_ALL_REPO = "since"
+    const val PAGE_COUNT = 100
 
     //Authorization in browser
     const val URL_AUTH = "https://github.com/login/oauth/authorize"

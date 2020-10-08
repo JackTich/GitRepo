@@ -2,6 +2,7 @@ package com.jacktich.gitrepo.di.components
 
 import android.app.Application
 import com.jacktich.gitrepo.app.GitRepoApp
+import com.jacktich.gitrepo.di.base.MultibindUiModule
 import com.jacktich.gitrepo.di.modules.AppModule
 import dagger.BindsInstance
 import dagger.Component
@@ -9,7 +10,7 @@ import dagger.android.AndroidInjectionModule
 import javax.inject.Singleton
 
 @Singleton
-@Component(modules = [AndroidInjectionModule::class, AppModule::class])
+@Component(modules = [AndroidInjectionModule::class, AppModule::class, MultibindUiModule::class])
 interface AppComponents {
 
     @Component.Builder

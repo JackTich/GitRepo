@@ -8,5 +8,6 @@
     <color name="superWhite">#FCFCFC</color>
     <color name="ghostDark">#636E72</color>
     <color name="ghostLight">#DADCE0</color>
+    <color name="shimmer_recycle_view">#16000000</color>
 
 </resources>

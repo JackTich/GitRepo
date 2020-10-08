@@ -9,4 +9,9 @@
         app:showAsAction="always"
         android:icon="@drawable/ic_search"
         />
+    <item
+        android:id="@+id/overflowItem"
+        app:showAsAction="never"
+        android:title="@string/sign_in"
+        />
 </menu>

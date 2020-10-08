@@ -5,4 +5,6 @@ interface PreferencesHelper {
     fun setAccessToken(token: String)
 
     fun getAccessToken(): String?
+
+    fun clearAccessToken()
 }
